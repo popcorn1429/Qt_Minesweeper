@@ -228,6 +228,8 @@ void GameEngine::openCoveredTile(int iTile) {
 }
 
 int GameEngine::getMineNumAroundTile(int iTile) const {
+    //it's wrong when tile is on the edge.
+    //
     int sum = (isMineTile(iTile-m_iColNum-1)?1:0)
             + (isMineTile(iTile-m_iColNum)?1:0)
             + (isMineTile(iTile-m_iColNum+1)?1:0)

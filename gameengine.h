@@ -49,6 +49,11 @@ public:
     void tileRightClicked(int iTile);
     void tileBothClicked(int iTile);
 
+    inline bool isLeftEdgeTile(int iTile) const { return iTile % m_iColNum == 0; }
+    inline bool isRightEdgeTile(int iTile) const { return iTile % m_iColNum == m_iColNum-1; }
+    inline bool isUpEdgeTile(int iTile) const { return iTile < m_iColNum; }
+    inline bool isDownEdgeTile(int iTile) const { return m_iColNum * m_iRowNum < iTile + m_iColNum; }
+
     inline bool isMineTile(int iTile) const { return (isValidTile(iTile) && MINE_HERE == m_vMineStateOfTiles[iTile]); }
     inline bool isMarkTile(int iTile) const { return (isValidTile(iTile) && TILE_OPER::TILE_MARKED == m_vOperStateOfTiles[iTile]); }
 
