@@ -11,7 +11,8 @@ const int NO_MINE_AROUND = 0;  //this tile has no mine ,and tiles around it have
 enum class TILE_OPER {
     TILE_UNCOVERED,
     TILE_MARKED,
-    TILE_COVERED
+    TILE_COVERED,
+    TILE_PRESSED
 };
 
 
@@ -48,6 +49,7 @@ public:
     void tileLeftClicked(int iTile);
     void tileRightClicked(int iTile);
     void tileBothClicked(int iTile);
+    void tilePressed(int iTile);
 
     inline bool isLeftEdgeTile(int iTile) const { return iTile % m_iColNum == 0; }
     inline bool isRightEdgeTile(int iTile) const { return iTile % m_iColNum == m_iColNum-1; }
@@ -62,8 +64,13 @@ private:
     void checkAndSpread(int iTile);
 
     void trySpreadTilesAround(int iTile); //spread tiles forcely
-    void openAroundTilesCovered(int iTile);
-    void openCoveredTile(int iTile);
+    void openAroundTilesPressed(int iTile);
+    void openPressedTile(int iTile);
+    void releaseAroundTilesPressed(int iTile);
+    void releasePressedTile(int iTile);
+
+    void pressTilesAround(int iTile);
+    void pressCoveredTile(int iTile);
 
     inline bool checkFinish() const { return m_iMineNum + m_iUncoverTiles == m_vMineStateOfTiles.size(); }
 

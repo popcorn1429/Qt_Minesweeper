@@ -123,11 +123,21 @@ void GameEngine::tileBothClicked(int iTile) {
         return;
 
     //current tile must be uncovered!
-    if (TILE_OPER::TILE_UNCOVERED != m_vOperStateOfTiles[iTile]) {
+    if (TILE_OPER::TILE_UNCOVERED != m_vOperStateOfTiles[iTile])
         return;
-    }
 
     trySpreadTilesAround(iTile);
+}
+
+void GameEngine::tilePressed(int iTile)
+{
+    if (!isValidTile(iTile))
+        return;
+
+    if (TILE_OPER::TILE_UNCOVERED != m_vOperStateOfTiles[iTile])
+        return;
+
+    pressTilesAround(iTile);
 }
 
 //when current tile has no mine and all tiles around it have no mine. call this function.
@@ -188,36 +198,39 @@ void GameEngine::trySpreadTilesAround(int iTile) {
         return;
 
     int iMineNum = m_vMineStateOfTiles[iTile];
-    int iMarkNum = (isMarkTile(iTile-m_iColNum-1)?1:0)
-            + (isMarkTile(iTile-m_iColNum)?1:0)
-            + (isMarkTile(iTile-m_iColNum+1)?1:0)
-            + (isMarkTile(iTile-1)?1:0)
-            + (isMarkTile(iTile+1)?1:0)
-            + (isMarkTile(iTile+m_iColNum-1)?1:0)
-            + (isMarkTile(iTile+m_iColNum)?1:0)
-            + (isMarkTile(iTile+m_iColNum+1)?1:0);
+    int iMarkNum = ((!isLeftEdgeTile(iTile) && !isUpEdgeTile(iTile) && isMarkTile(iTile-m_iColNum-1))?1:0)
+            + ((!isUpEdgeTile(iTile) && isMarkTile(iTile-m_iColNum))?1:0)
+            + ((!isRightEdgeTile(iTile) && !isUpEdgeTile(iTile) && isMarkTile(iTile-m_iColNum+1))?1:0)
+            + ((!isLeftEdgeTile(iTile) && isMarkTile(iTile-1))?1:0)
+            + ((!isRightEdgeTile(iTile) && isMarkTile(iTile+1))?1:0)
+            + ((!isLeftEdgeTile(iTile) && !isDownEdgeTile(iTile) && isMarkTile(iTile+m_iColNum-1))?1:0)
+            + ((!isDownEdgeTile(iTile) && isMarkTile(iTile+m_iColNum))?1:0)
+            + ((!isRightEdgeTile(iTile) && !isDownEdgeTile(iTile) && isMarkTile(iTile+m_iColNum+1))?1:0);
 
     if (iMarkNum == iMineNum) {
-        openAroundTilesCovered(iTile);
+        openAroundTilesPressed(iTile);
+    }
+    else {
+        releaseAroundTilesPressed(iTile);
     }
 }
 
-void GameEngine::openAroundTilesCovered(int iTile) {
-    openCoveredTile(iTile-m_iColNum-1);
-    openCoveredTile(iTile-m_iColNum);
-    openCoveredTile(iTile-m_iColNum+1);
-    openCoveredTile(iTile-1);
-    openCoveredTile(iTile+1);
-    openCoveredTile(iTile+m_iColNum-1);
-    openCoveredTile(iTile+m_iColNum);
-    openCoveredTile(iTile+m_iColNum+1);
+void GameEngine::openAroundTilesPressed(int iTile) {
+    if (!isLeftEdgeTile(iTile) && !isUpEdgeTile(iTile)) openPressedTile(iTile-m_iColNum-1);
+    if (!isUpEdgeTile(iTile)) openPressedTile(iTile-m_iColNum);
+    if (!isRightEdgeTile(iTile) && !isUpEdgeTile(iTile)) openPressedTile(iTile-m_iColNum+1);
+    if (!isLeftEdgeTile(iTile)) openPressedTile(iTile-1);
+    if (!isRightEdgeTile(iTile)) openPressedTile(iTile+1);
+    if (!isLeftEdgeTile(iTile) && !isDownEdgeTile(iTile)) openPressedTile(iTile+m_iColNum-1);
+    if (!isDownEdgeTile(iTile)) openPressedTile(iTile+m_iColNum);
+    if (!isRightEdgeTile(iTile) && !isDownEdgeTile(iTile)) openPressedTile(iTile+m_iColNum+1);
 }
 
-void GameEngine::openCoveredTile(int iTile) {
+void GameEngine::openPressedTile(int iTile) {
     if (!isValidTile(iTile))
         return;
 
-    if (TILE_OPER::TILE_COVERED == m_vOperStateOfTiles[iTile]) {
+    if (TILE_OPER::TILE_PRESSED == m_vOperStateOfTiles[iTile]) {
         m_vOperStateOfTiles[iTile] = TILE_OPER::TILE_UNCOVERED;
         if (m_vMineStateOfTiles[iTile] == MINE_HERE) {
             emit boom(iTile); //game over !!
@@ -227,17 +240,61 @@ void GameEngine::openCoveredTile(int iTile) {
     }
 }
 
+void GameEngine::releaseAroundTilesPressed(int iTile)
+{
+    if (!isLeftEdgeTile(iTile) && !isUpEdgeTile(iTile)) releasePressedTile(iTile-m_iColNum-1);
+    if (!isUpEdgeTile(iTile)) releasePressedTile(iTile-m_iColNum);
+    if (!isRightEdgeTile(iTile) && !isUpEdgeTile(iTile)) releasePressedTile(iTile-m_iColNum+1);
+    if (!isLeftEdgeTile(iTile)) releasePressedTile(iTile-1);
+    if (!isRightEdgeTile(iTile)) releasePressedTile(iTile+1);
+    if (!isLeftEdgeTile(iTile) && !isDownEdgeTile(iTile)) releasePressedTile(iTile+m_iColNum-1);
+    if (!isDownEdgeTile(iTile)) releasePressedTile(iTile+m_iColNum);
+    if (!isRightEdgeTile(iTile) && !isDownEdgeTile(iTile)) releasePressedTile(iTile+m_iColNum+1);
+}
+
+void GameEngine::releasePressedTile(int iTile)
+{
+    if (!isValidTile(iTile))
+        return;
+
+    if (TILE_OPER::TILE_PRESSED == m_vOperStateOfTiles[iTile]) {
+        m_vOperStateOfTiles[iTile] = TILE_OPER::TILE_COVERED;
+        emit updateTileState(iTile, TILE_OPER::TILE_COVERED, m_vMineStateOfTiles[iTile]);
+    }
+}
+
+void GameEngine::pressTilesAround(int iTile)
+{
+    if (!isLeftEdgeTile(iTile) && !isUpEdgeTile(iTile)) pressCoveredTile(iTile-m_iColNum-1);
+    if (!isUpEdgeTile(iTile)) pressCoveredTile(iTile-m_iColNum);
+    if (!isRightEdgeTile(iTile) && !isUpEdgeTile(iTile)) pressCoveredTile(iTile-m_iColNum+1);
+    if (!isLeftEdgeTile(iTile)) pressCoveredTile(iTile-1);
+    if (!isRightEdgeTile(iTile)) pressCoveredTile(iTile+1);
+    if (!isLeftEdgeTile(iTile) && !isDownEdgeTile(iTile)) pressCoveredTile(iTile+m_iColNum-1);
+    if (!isDownEdgeTile(iTile)) pressCoveredTile(iTile+m_iColNum);
+    if (!isRightEdgeTile(iTile) && !isDownEdgeTile(iTile)) pressCoveredTile(iTile+m_iColNum+1);
+}
+
+void GameEngine::pressCoveredTile(int iTile)
+{
+    if (!isValidTile(iTile))
+        return;
+
+    if (TILE_OPER::TILE_COVERED == m_vOperStateOfTiles[iTile]) {
+        m_vOperStateOfTiles[iTile] = TILE_OPER::TILE_PRESSED;
+        emit updateTileState(iTile, TILE_OPER::TILE_PRESSED, m_vMineStateOfTiles[iTile]);
+    }
+}
+
 int GameEngine::getMineNumAroundTile(int iTile) const {
-    //it's wrong when tile is on the edge.
-    //
-    int sum = (isMineTile(iTile-m_iColNum-1)?1:0)
-            + (isMineTile(iTile-m_iColNum)?1:0)
-            + (isMineTile(iTile-m_iColNum+1)?1:0)
-            + (isMineTile(iTile-1)?1:0)
-            + (isMineTile(iTile+1)?1:0)
-            + (isMineTile(iTile+m_iColNum-1)?1:0)
-            + (isMineTile(iTile+m_iColNum)?1:0)
-            + (isMineTile(iTile+m_iColNum+1)?1:0);
+    int sum = ((!isLeftEdgeTile(iTile) && !isUpEdgeTile(iTile) && isMineTile(iTile-m_iColNum-1))?1:0)
+            + ((!isUpEdgeTile(iTile) && isMineTile(iTile-m_iColNum))?1:0)
+            + ((!isRightEdgeTile(iTile) && !isUpEdgeTile(iTile) && isMineTile(iTile-m_iColNum+1))?1:0)
+            + ((!isLeftEdgeTile(iTile) && isMineTile(iTile-1))?1:0)
+            + ((!isRightEdgeTile(iTile) && isMineTile(iTile+1))?1:0)
+            + ((!isLeftEdgeTile(iTile) && !isDownEdgeTile(iTile) && isMineTile(iTile+m_iColNum-1))?1:0)
+            + ((!isDownEdgeTile(iTile) && isMineTile(iTile+m_iColNum))?1:0)
+            + ((!isRightEdgeTile(iTile) && !isDownEdgeTile(iTile) && isMineTile(iTile+m_iColNum+1))?1:0);
     return sum;
 }
 

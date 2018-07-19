@@ -1,6 +1,6 @@
 #include "tilelabel.h"
 
-const int click_interval = 250;
+const int CLICK_INTEVAL = 250;
 
 int TileLabel::s_iMaxRow = 0;
 int TileLabel::s_iMaxCol = 0;
@@ -22,6 +22,7 @@ void TileLabel::mousePressEvent(QMouseEvent *ev) {
     if (m_bRightPressed && m_bLeftPressed) {
         //qDebug("both pressed");
         m_bPartlyReleased = false;
+        emit tileBothPressed(m_iRow, m_iCol);
     }
 
     m_tPress = clock();
@@ -32,54 +33,56 @@ void TileLabel::mousePressEvent(QMouseEvent *ev) {
 void TileLabel::mouseReleaseEvent(QMouseEvent *ev) {
     //qDebug("TileLabel mouse release");
     m_tRelease = clock();
-    //qDebug("TileLabel mouse release %ld - %ld = %ld ", m_tRelease, m_tPress, m_tRelease-m_tPress);
-    if ((m_tRelease - m_tPress)*1000/CLOCKS_PER_SEC < click_interval) {
-        //qDebug("TileLabel mouse clicked!  %d", ev->button());
-        if (Qt::LeftButton == ev->button()) {
-            if (!m_bRightPressed) {
-                qDebug("emit tileLeftClicked");
-                QLabel::mouseReleaseEvent(ev);
-                m_tPress = m_tRelease;
-                m_tRelease = 0;
+    long lPressedDuration = (m_tRelease - m_tPress)*1000/CLOCKS_PER_SEC;
+    //qDebug("TileLabel mouse release %ld - %ld = %ld ms.", m_tRelease, m_tPress, lPressedDuration);
+    if (Qt::LeftButton == ev->button()) {
+        if (!m_bRightPressed) {
+            QLabel::mouseReleaseEvent(ev);
+            m_tPress = m_tRelease;
+            m_tRelease = 0;
+
+            if (lPressedDuration <= CLICK_INTEVAL) {
+                //qDebug("tileLeftClicked!");
                 emit tileLeftClicked(m_iRow, m_iCol);
             }
-            else if (m_bPartlyReleased) {
-                //qDebug("click left & right");
-                QLabel::mouseReleaseEvent(ev);
-                m_tPress = m_tRelease;
-                m_tRelease = 0;
-                emit tileBothClicked(m_iRow, m_iCol);
-            }
-            else {
-                //qDebug("release partly");
-                m_bPartlyReleased = true;
-                m_tPress = m_tRelease;
-                m_tRelease = 0;
-                QLabel::mouseReleaseEvent(ev);
-            }
         }
-        else if (ev->button() == Qt::RightButton) {
-            if (!m_bLeftPressed) {
-                //qDebug("click right");
-                QLabel::mouseReleaseEvent(ev);
-                m_tPress = m_tRelease;
-                m_tRelease = 0;
+        else if (m_bPartlyReleased) {
+            QLabel::mouseReleaseEvent(ev);
+            m_tPress = m_tRelease;
+            m_tRelease = 0;
+            emit tileBothReleased(m_iRow, m_iCol);
+        }
+        else {
+            //qDebug("release partly");
+            m_bPartlyReleased = true;
+            m_tPress = m_tRelease;
+            m_tRelease = 0;
+            QLabel::mouseReleaseEvent(ev);
+        }
+    }
+    else if (ev->button() == Qt::RightButton) {
+        if (!m_bLeftPressed) {
+            QLabel::mouseReleaseEvent(ev);
+            m_tPress = m_tRelease;
+            m_tRelease = 0;
+
+            if (lPressedDuration <= CLICK_INTEVAL) {
+                //qDebug("tileRightClicked!");
                 emit tileRightClicked(m_iRow, m_iCol);
             }
-            else if (m_bPartlyReleased) {
-                //qDebug("click left & right");
-                m_tPress = m_tRelease;
-                m_tRelease = 0;
-                QLabel::mouseReleaseEvent(ev);
-                emit tileBothClicked(m_iRow, m_iCol);
-            }
-            else {
-                //qDebug("release partly");
-                m_bPartlyReleased = true;
-                m_tPress = m_tRelease;
-                m_tRelease = 0;
-                QLabel::mouseReleaseEvent(ev);
-            }
+        }
+        else if (m_bPartlyReleased) {
+            m_tPress = m_tRelease;
+            m_tRelease = 0;
+            QLabel::mouseReleaseEvent(ev);
+            emit tileBothReleased(m_iRow, m_iCol);
+        }
+        else {
+            //qDebug("release partly");
+            m_bPartlyReleased = true;
+            m_tPress = m_tRelease;
+            m_tRelease = 0;
+            QLabel::mouseReleaseEvent(ev);
         }
     }
 }

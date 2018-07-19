@@ -114,8 +114,9 @@ void MainWindow::resetTiles(int iRowNum, int iColNum) {
             tile->setAlignment(Qt::AlignCenter);
             //connect tile with window
             connect(tile, &TileLabel::tileLeftClicked, this, &MainWindow::onTileLeftClicked);
-            connect(tile, &TileLabel::tileBothClicked, this, &MainWindow::onTileBothClicked);
+            connect(tile, &TileLabel::tileBothReleased, this, &MainWindow::onTileBothClicked);
             connect(tile, &TileLabel::tileRightClicked, this, &MainWindow::onTileRightClicked);
+            connect(tile, &TileLabel::tileBothPressed, this, &MainWindow::onTilePressed);
 
             tiles.push_back(tile);
         }
@@ -198,6 +199,15 @@ void MainWindow::onTileBothClicked(int iRow, int iCol) {
     engine->tileBothClicked(iTile);
 }
 
+void MainWindow::onTilePressed(int iRow, int iCol)
+{
+    if (GameState::RUNNING != gameState)
+        return;
+
+    int iTile = iRow * engine->totalColNum() + iCol;
+    engine->tilePressed(iTile);
+}
+
 void MainWindow::onBoom(int iTile) {
     TileLabel* tile = tiles[iTile];
     tile->clear();
@@ -222,6 +232,9 @@ void MainWindow::onUpdateTileState(int iTile, TILE_OPER iOper, int iMine) {
     case TILE_OPER::TILE_COVERED:
         tile->setStyleSheet(QStringLiteral("QLabel {border-radius:4px; border:2px solid #5F92B2; background-color: #a6ddff;}"));
         tile->clear();
+        break;
+    case TILE_OPER::TILE_PRESSED:
+        tile->setStyleSheet(QStringLiteral("QLabel {border-radius:4px; border:2px solid #5F92B2; background-color: #4374d0;}"));
         break;
     default:
         break;

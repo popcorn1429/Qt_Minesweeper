@@ -26,7 +26,9 @@ protected:
     void mouseReleaseEvent(QMouseEvent *ev);
 
 signals:
-    void tileBothClicked(int iRow, int iCol);
+    void tileBothPressed(int iRow, int iCol);
+    void tileBothReleased(int iRow, int iCol);
+
     void tileLeftClicked(int iRow, int iCol);
     void tileRightClicked(int iRow, int iCol);
 

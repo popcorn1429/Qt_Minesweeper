@@ -43,6 +43,7 @@ public slots:
     void onTileLeftClicked(int iRow, int iCol);
     void onTileRightClicked(int iRow, int iCol);
     void onTileBothClicked(int iRow, int iCol);
+    void onTilePressed(int iRow, int iCol);
 
     //deal signals from GameEngine
     void onBoom(int iTile);
